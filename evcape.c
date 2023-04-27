@@ -1,4 +1,5 @@
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -65,26 +66,63 @@ enum ECLogLevel {
   EVCAPE_WARNING,
   EVCAPE_INFO,
   EVCAPE_VERBOSE,
+  EVCAPE_TRACE,
 };
 
 static int log_level = EVCAPE_VERBOSE;
 
-static void evcape_log_error(const char* message) {
-  if (log_level >=  EVCAPE_ERROR) {
-    fprintf(stderr, ANSI_FG_RED ANSI_BOLD "(erro)" ANSI_RESET " %s\n", message);
+static void evcape_vlog(int level, const char* message, va_list args) {
+  if (log_level >= level) {
+    char* prefix;
+    switch (level) {
+      case EVCAPE_VERBOSE:
+        prefix = ANSI_FG_MAGENTA ANSI_BOLD "(verb)" ANSI_RESET;
+        break;
+      case EVCAPE_INFO:
+        prefix = ANSI_FG_YELLOW ANSI_BOLD "(info)" ANSI_RESET;
+        break;
+      case EVCAPE_WARNING:
+        prefix = ANSI_FG_RED ANSI_BOLD "(warn)" ANSI_RESET;
+        break;
+      case EVCAPE_ERROR:
+        prefix = ANSI_FG_RED ANSI_BOLD "(erro)" ANSI_RESET;
+        break;
+      case EVCAPE_FATAL:
+        prefix = ANSI_FG_RED ANSI_BOLD "(fata)" ANSI_RESET;
+        break;
+    }
+    char buffer[256];
+    vsprintf(buffer, message, args);
+    fprintf(stderr, "%s %s\n", prefix, buffer);
   }
 }
 
-static void evcape_log_verbose(const char* message) {
-  if (log_level >= EVCAPE_VERBOSE) {
-    fprintf(stderr, ANSI_FG_MAGENTA ANSI_BOLD "(verb)" ANSI_RESET " %s\n", message);
-  }
+static void evcape_log_trace(const char* message, ...) {
+  va_list args;
+  va_start(args, message);
+  evcape_vlog(EVCAPE_TRACE, message, args);
+  va_end(args);
 }
 
-static void evcape_log_info(const char* message) {
-  if (log_level >= EVCAPE_INFO) {
-    fprintf(stderr, ANSI_FG_YELLOW ANSI_BOLD "(info)" ANSI_RESET " %s\n", message);
-  }
+static void evcape_log_error(const char* message, ...) {
+  va_list args;
+  va_start(args, message);
+  evcape_vlog(EVCAPE_ERROR, message, args);
+  va_end(args);
+}
+
+static void evcape_log_verbose(const char* message, ...) {
+  va_list args;
+  va_start(args, message);
+  evcape_vlog(EVCAPE_VERBOSE, message, args);
+  va_end(args);
+}
+
+static void evcape_log_info(const char* message, ...) {
+  va_list args;
+  va_start(args, message);
+  evcape_vlog(EVCAPE_INFO, message, args);
+  va_end(args);
 }
 
 int main(int argc, const char* argv[]) {
@@ -239,11 +277,7 @@ int main(int argc, const char* argv[]) {
 
       for (struct input_event* ev = input_events; ev != input_events_end; ev++) {
 
-#if EVCAPE_ENABLE_VERBOSE_LOGGING
-        char message[64];
-        sprintf(message, "Event: time %ld.%06ld, type: %i, code: %i, value: %i", ev->time.tv_sec, ev->time.tv_usec, ev->type, ev->code, ev->value);
-        evcape_log_verbose(message);
-#endif
+        evcape_log_trace("Event: time %ld.%06ld, type: %i, code: %i, value: %i", ev->time.tv_sec, ev->time.tv_usec, ev->type, ev->code, ev->value);
 
         if (ev->type == EV_KEY) {
 
@@ -254,7 +288,7 @@ int main(int argc, const char* argv[]) {
             } else if (ev->value == 0) {
               double esc_released_time = evcape_timestamp();
               if (esc_released_time - esc_pressed_timestamp < EVCAPE_KEY_TIMEOUT && !pressed_other_key) {
-                evcape_log_info("sending the escape-key ...");
+                evcape_log_verbose("sending the Escape-key ...");
                 emit(uinput_fd, EV_KEY, KEY_ESC, 1);
                 emit(uinput_fd, EV_SYN, SYN_REPORT, 0);
                 emit(uinput_fd, EV_KEY, KEY_ESC, 0);
