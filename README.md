@@ -1,8 +1,8 @@
 evcape
 ======
 
-This is a small utility that makes a short press of the control-key act as a
-press of the escape-key. It can significantly ease the development workflow
+This is a small utility that makes a short press of the CapsLock-key act as a
+press of the Escape-key. It can significantly ease the development workflow
 when using a text editor such as Vim. Because it is written in C, this program
 is also very performant with minimal memory overhead.
 
@@ -50,6 +50,20 @@ Alternatively, the following command might work when working on Xwayland or X11:
 ```bash
 setxkbmap -option "ctrl:nocaps"
 ```
+
+### Running
+
+Simply run `evcape` with sudo privileges and you're good to go!
+
+evcape needs sudo privileges because it intercepts and then injects raw key
+events from/to the keyboard subsystem. Because Wayland does not offer a
+standard protocol to do the same, the driver is where we need to be.
+
+The following environment variables can be set to influence the behavior of evcape:
+
+| Name               |                                                      |
+|--------------------|------------------------------------------------------|
+| `EVCAPE_LOG_LEVEL` | An integer from 0 (no logging) to 6 (log everything) |
 
 ## Related Work
 
