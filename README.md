@@ -19,7 +19,7 @@ Make sure you have the right packages installed. On Debian/Ubuntu, this will
 look something like this:
 
 ```sh
-sudo apt install libudev-dev
+sudo apt install libudev-dev libevdev-dev
 ```
 
 Ensure Meson is installed on your system. 
