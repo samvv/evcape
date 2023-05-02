@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <inttypes.h>
+#include <errno.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -61,6 +63,7 @@ static double evcape_timestamp() {
 #define ANSI_REVERSED "\x1b[7m"
 
 enum ECLogLevel {
+  EVCAPE_NO_LOGGING,
   EVCAPE_FATAL,
   EVCAPE_ERROR,
   EVCAPE_WARNING,
@@ -69,7 +72,7 @@ enum ECLogLevel {
   EVCAPE_TRACE,
 };
 
-static int log_level = EVCAPE_VERBOSE;
+static int log_level = EVCAPE_INFO;
 
 static void evcape_vlog(int level, const char* message, va_list args) {
   if (log_level >= level) {
@@ -104,13 +107,6 @@ static void evcape_log_trace(const char* message, ...) {
   va_end(args);
 }
 
-static void evcape_log_error(const char* message, ...) {
-  va_list args;
-  va_start(args, message);
-  evcape_vlog(EVCAPE_ERROR, message, args);
-  va_end(args);
-}
-
 static void evcape_log_verbose(const char* message, ...) {
   va_list args;
   va_start(args, message);
@@ -125,7 +121,31 @@ static void evcape_log_info(const char* message, ...) {
   va_end(args);
 }
 
+static void evcape_log_error(const char* message, ...) {
+  va_list args;
+  va_start(args, message);
+  evcape_vlog(EVCAPE_ERROR, message, args);
+  va_end(args);
+}
+
+static void evcape_log_fatal(const char* message, ...) {
+  va_list args;
+  va_start(args, message);
+  evcape_vlog(EVCAPE_FATAL, message, args);
+  va_end(args);
+}
+
 int main(int argc, const char* argv[]) {
+  
+  char* loglevel_str = getenv("EVCAPE_LOG_LEVEL");
+  if (loglevel_str != NULL) {
+    int num = strtoumax(loglevel_str, NULL, 10);
+    if (num != UINTMAX_MAX && errno != ERANGE && num <= EVCAPE_TRACE && num >= EVCAPE_NO_LOGGING) {
+      log_level = num;
+    }
+  }
+
+  // printf("Now logging with log level %i\n", log_level);
 
   KBHandle kbs[EVCAPE_MAX_KEYBOARDS];
   int kb_count = 0;
@@ -150,7 +170,7 @@ int main(int argc, const char* argv[]) {
 
     const char* path = udev_list_entry_get_name(entry);
 
-    fprintf(stderr, "Found keyboard device %s\n", path);
+    evcape_log_verbose("found keyboard device %s", path);
 
     struct udev_device* kb = udev_device_new_from_syspath(udev, path);
 
@@ -158,28 +178,29 @@ int main(int argc, const char* argv[]) {
 
     if (dev_path) {
 
-      fprintf(stderr, "dev_path = %s\n", dev_path);
+      evcape_log_verbose("udev.devnode = %s", dev_path);
 
       char* new_dev_path = malloc(strlen(dev_path));
 
-      if (kb_count >= EVCAPE_MAX_KEYBOARDS) {
-        fprintf(stderr, "Error: more than %i keyboards detected\n", EVCAPE_MAX_KEYBOARDS);
+      if (!new_dev_path) {
+        evcape_log_fatal("out of host memory");
         // TODO close file descriptors up till this index
         return 1;
       }
 
-      if (!new_dev_path) {
-        fprintf(stderr, "Error: out of host memory\n");
+      if (kb_count >= EVCAPE_MAX_KEYBOARDS) {
+        evcape_log_error("more than %i keyboards detected", EVCAPE_MAX_KEYBOARDS);
         // TODO close file descriptors up till this index
         return 1;
       }
+
 
       strcpy(new_dev_path, dev_path);
 
       int fd = open(dev_path, O_RDONLY | O_NONBLOCK);
 
       if (fd < 0) {
-        fprintf(stderr, "Error: could not open file %s\n", dev_path);
+        evcape_log_error("could not open file %s", dev_path);
         // TODO close file descriptors up till this index
         return 1;
       }
@@ -253,6 +274,9 @@ int main(int argc, const char* argv[]) {
   int should_loop = 1;
   int pressed_other_key = 0;
   double esc_pressed_timestamp;
+
+  evcape_log_info("successfully connected to device");
+  evcape_log_info("starting event loop");
 
   while (should_loop) {
 
