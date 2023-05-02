@@ -68,7 +68,7 @@ The following environment variables can be set to influence the behavior of evca
 ## Related Work
 
  - [A Python implementation of evcape](https://github.com/wbolster/evcape/)
- - [Interception Tools](https://gitlab.com/interception/linux/tools)
+ - [Interception Tools](https://gitlab.com/interception/linux/tools) and in particular [caps2esc](https://gitlab.com/interception/linux/plugins/caps2esc)
 
 ## License
 
