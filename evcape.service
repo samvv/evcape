@@ -1,11 +1,10 @@
 [Unit]
 Description=Make the control-key act as an escape-key
-After=gdm.service
 
 [Service]
+Type=simple
 ExecStart=/usr/local/bin/evcape
 
 [Install]
-WantedBy=graphical.target
-Alias=evcape.service
+WantedBy=multi-user.target
 
