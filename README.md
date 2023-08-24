@@ -65,6 +65,23 @@ The following environment variables can be set to influence the behavior of evca
 |--------------------|------------------------------------------------------|
 | `EVCAPE_LOG_LEVEL` | An integer from 0 (no logging) to 6 (log everything) |
 
+### systemd
+
+The following is an example of how a systemd file could look. Adjust it to your
+needs and save it `/etc/systemd/system/evcape.service`.
+
+```systemd
+[Unit]
+Description=Make the control-key act as an escape-key
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/evcape
+
+[Install]
+WantedBy=multi-user.target
+```
+
 ## Related Work
 
  - [A Python implementation of evcape](https://github.com/wbolster/evcape/)
