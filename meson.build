@@ -6,7 +6,6 @@ libudev = dependency('libudev')
 
 executable('evcape',
   'evcape.c',
-  'evcape_opts.c',
   dependencies: [ libevdev, libudev ],
 )
 
