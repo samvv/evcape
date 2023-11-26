@@ -7,5 +7,6 @@ libudev = dependency('libudev')
 executable('evcape',
   'evcape.c',
   dependencies: [ libevdev, libudev ],
+  install: true
 )
 
