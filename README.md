@@ -1,7 +1,7 @@
 evcape
 ======
 
-This is a small utility that makes a short press of the CapsLock-key act as a
+This is a small utility that makes a short press of the Control-key act as a
 press of the Escape-key. It can significantly ease the development workflow
 when using a text editor such as Vim. Because it is written in C, this program
 is also very performant with minimal memory overhead.
@@ -31,8 +31,15 @@ python3 -m pip install -U --user meson
 Finally, generate the build rules and compile the sources:
 
 ```sh
-meson build
+meson setup build
 ninja -C build
+```
+
+To install the resulting binary, use Meson again:
+
+```sh
+cd build
+meson install
 ```
 
 ### Setting Up CapsLock
@@ -68,7 +75,7 @@ The following environment variables can be set to influence the behavior of evca
 ### systemd
 
 The following is an example of how a systemd file could look. Adjust it to your
-needs and save it `/etc/systemd/system/evcape.service`.
+needs and save it to `/etc/systemd/system/evcape.service`.
 
 ```systemd
 [Unit]
