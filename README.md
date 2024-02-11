@@ -104,6 +104,7 @@ Description=Make the control-key act as an escape-key
 [Service]
 Type=simple
 ExecStart=/usr/local/bin/evcape
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
