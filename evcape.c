@@ -95,7 +95,7 @@ static void evcape_vlog(int level, const char* message, va_list args) {
         break;
     }
     char buffer[256];
-    vsprintf(buffer, message, args);
+    vsnprintf(buffer, 256, message, args);
     fprintf(stderr, "%s %s\n", prefix, buffer);
   }
 }
