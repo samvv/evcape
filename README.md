@@ -30,6 +30,10 @@ python3 -m pip install -U --user meson
 
 To install the package, simply run the following command:
 
+**⚠️ This will install configuration files that are expected to run on standard
+Debian distros. When in doubt, build the service using the instructions below
+and review each file before installing it.**
+
 ```sh
 sudo make install
 ```
