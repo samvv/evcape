@@ -28,19 +28,35 @@ Ensure Meson is installed on your system.
 python3 -m pip install -U --user meson
 ```
 
-Finally, generate the build rules and compile the sources:
+To install the package, simply run the following command:
+
+```sh
+sudo make install
+```
+
+This will install the following files:
+
+ - `/etc/udev/rules.d/50-evcape.rules`
+ - `/etc/systemd/system/evcape.service`
+ - `/usr/local/bin/evcape`
+
+You might want to run the following commands to activate `evcape` immediately:
+
+```
+sudo udevadm control --reload-rules && sudo udevadm trigger
+sudo systemctl daemon-reload
+sudo systemctl enable evcape
+sudo systemctl start evcape
+```
+
+If you just want the binary, run the following commands:
 
 ```sh
 meson setup build
-ninja -C build
+ninja -C build evcape
 ```
 
-To install the resulting binary, use Meson again:
-
-```sh
-cd build
-meson install
-```
+The binary will be available as `build/evcape`.
 
 ### Setting Up CapsLock
 
