@@ -1,1 +1,1 @@
-SUBSYSTEM=="input", SUBSYSTEMS=="usb", ACTION=="add", TAG+="systemd", ENV{SYSTEMD_WANTS}="evcape.service"
+SUBSYSTEM=="input", SUBSYSTEMS=="usb", ACTION=="add", TAG+="systemd", RUN+="/usr/bin/systemctl restart evcape"
