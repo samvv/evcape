@@ -19,6 +19,7 @@
 #define EVCAPE_MAX_EPOLL_EVENTS 5
 #define EVCAPE_MAX_KEYBOARDS 32
 #define EVCAPE_MAX_ARG_LEN 64
+
 #define EVCAPE_KEY_TIMEOUT 0.5
 
 typedef struct {
@@ -136,7 +137,8 @@ static void evcape_log_fatal(const char* message, ...) {
 }
 
 int main(int argc, const char* argv[]) {
-  
+
+  int code = 0;
   char* loglevel_str = getenv("EVCAPE_LOG_LEVEL");
   if (loglevel_str != NULL) {
     int num = strtoumax(loglevel_str, NULL, 10);
@@ -149,6 +151,12 @@ int main(int argc, const char* argv[]) {
 
   KBHandle kbs[EVCAPE_MAX_KEYBOARDS];
   int kb_count = 0;
+
+#define EVCAPE_FREE_KBS \
+  for (int i = 0; i < kb_count; i++) { \
+    close(kbs[i].fd); \
+    free(kbs[i].path); \
+  }
 
   // Create the udev context
   struct udev* udev = udev_new();
@@ -163,10 +171,10 @@ int main(int argc, const char* argv[]) {
   // Perform the actual query
   udev_enumerate_scan_devices(enumerator);
 
-  struct udev_list_entry* first_entry = udev_enumerate_get_list_entry(enumerator);
+  struct udev_list_entry* device = udev_enumerate_get_list_entry(enumerator);
   struct udev_list_entry* entry;
 
-  udev_list_entry_foreach(entry, first_entry) {
+  udev_list_entry_foreach(entry, device) {
 
     const char* path = udev_list_entry_get_name(entry);
 
@@ -180,22 +188,21 @@ int main(int argc, const char* argv[]) {
 
       evcape_log_verbose("udev.devnode = %s", dev_path);
 
-      char* new_dev_path = malloc(strlen(dev_path));
+      if (kb_count >= EVCAPE_MAX_KEYBOARDS) {
+        evcape_log_error("more than %i keyboards detected", EVCAPE_MAX_KEYBOARDS);
+        EVCAPE_FREE_KBS
+        return 1;
+      }
 
-      if (!new_dev_path) {
+      char* dev_path_clone = malloc(strlen(dev_path));
+
+      if (!dev_path_clone) {
         evcape_log_fatal("out of host memory");
         // TODO close file descriptors up till this index
         return 1;
       }
 
-      if (kb_count >= EVCAPE_MAX_KEYBOARDS) {
-        evcape_log_error("more than %i keyboards detected", EVCAPE_MAX_KEYBOARDS);
-        // TODO close file descriptors up till this index
-        return 1;
-      }
-
-
-      strcpy(new_dev_path, dev_path);
+      strcpy(dev_path_clone, dev_path);
 
       int fd = open(dev_path, O_RDONLY | O_NONBLOCK);
 
@@ -207,7 +214,7 @@ int main(int argc, const char* argv[]) {
 
       kbs[kb_count] = (KBHandle) {
         .fd = fd,
-        .path = new_dev_path,
+        .path = dev_path_clone,
       };
 
       kb_count++;
@@ -221,7 +228,7 @@ int main(int argc, const char* argv[]) {
   udev_unref(udev);
 
   // Initialize the evdev system 
-  
+
   int epoll = epoll_create(kb_count);
 
   for (int i = 0; i < kb_count; i++) {
@@ -294,7 +301,8 @@ int main(int argc, const char* argv[]) {
 
       if (read_count % sizeof(struct input_event)) {
         evcape_log_error("inconsistent read while trying to read some keyboard events");
-        return 1;
+        code =  1;
+        goto exit;
       }
 
       struct input_event* input_events_end = input_events + input_event_count;
@@ -331,11 +339,15 @@ int main(int argc, const char* argv[]) {
 
   }
 
+exit:
+
+  EVCAPE_FREE_KBS
+
   ioctl(uinput_fd, UI_DEV_DESTROY);
   close(uinput_fd);
 
   close(epoll);
 
-  return 0;
+  return code;
 }
 
