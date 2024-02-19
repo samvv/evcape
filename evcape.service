@@ -1,5 +1,6 @@
 [Unit]
 Description=Make the control-key act as an escape-key
+After=udev.service
 
 [Service]
 Type=simple
