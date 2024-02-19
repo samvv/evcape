@@ -49,7 +49,7 @@ You might want to run the following commands to activate `evcape` immediately:
 ```
 sudo udevadm control --reload-rules && sudo udevadm trigger
 sudo systemctl daemon-reload
-sudo systemctl enable evcape
+sudo systemctl enable evcape.timer
 sudo systemctl start evcape
 ```
 
