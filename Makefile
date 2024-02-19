@@ -8,10 +8,10 @@ build/evcape:
 
 .PHONY: install
 install: build/evcape
-	cp 50-evcape.rules /etc/udev/rules.d/50-evcape.rules
-	cp evcape.service /etc/systemd/system/evcape.service
-	cp evcape.timer /etc/systemd/system/evcape.timer
-	cp build/evcape /usr/local/bin/evcape
+	install -v 50-evcape.rules /etc/udev/rules.d/50-evcape.rules
+	install -v evcape.service /etc/systemd/system/evcape.service
+	install -v evcape.timer /etc/systemd/system/evcape.timer
+	install -v build/evcape /usr/local/bin/evcape
 
 .PHONY: uninstall
 uninstall:
