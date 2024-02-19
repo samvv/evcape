@@ -42,6 +42,7 @@ This will install the following files:
 
  - `/etc/udev/rules.d/50-evcape.rules`
  - `/etc/systemd/system/evcape.service`
+ - `/etc/systemd/system/evcape.timer`
  - `/usr/local/bin/evcape`
 
 You might want to run the following commands to activate `evcape` immediately:
