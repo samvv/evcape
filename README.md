@@ -78,7 +78,7 @@ Alternatively, the following command might work when working on Xwayland or X11:
 setxkbmap -option "ctrl:nocaps"
 ```
 
-### Running
+### Running Manually
 
 Simply run `evcape` with sudo privileges and you're good to go!
 
@@ -91,24 +91,6 @@ The following environment variables can be set to influence the behavior of evca
 | Name               |                                                      |
 |--------------------|------------------------------------------------------|
 | `EVCAPE_LOG_LEVEL` | An integer from 0 (no logging) to 6 (log everything) |
-
-### systemd
-
-The following is an example of how a systemd file could look. Adjust it to your
-needs and save it to `/etc/systemd/system/evcape.service`.
-
-```systemd
-[Unit]
-Description=Make the control-key act as an escape-key
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/evcape
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-```
 
 ## Related Work
 
