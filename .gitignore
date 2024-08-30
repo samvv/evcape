@@ -1,3 +1,16 @@
+# general directories
 .cache/
+
+# Build artifacts
 /build/
 /evacpe
+
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
