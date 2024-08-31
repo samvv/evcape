@@ -129,27 +129,27 @@ static void evcape_vlog(int level, const char* message, va_list args) {
     const char* prefix;
     switch (level) {
       case EVCAPE_TRACE:
-        prefix = "trace";
+        prefix = "TRACE";
         break;
       case EVCAPE_VERBOSE:
-        prefix = "verb";
+        prefix = "VERB";
         break;
       case EVCAPE_INFO:
-        prefix = "info";
+        prefix = "INFO";
         break;
       case EVCAPE_WARNING:
-        prefix = "warn";
+        prefix = "WARN";
         break;
       case EVCAPE_ERROR:
-        prefix = "erro";
+        prefix = "ERRO";
         break;
       case EVCAPE_FATAL:
-        prefix = "fata";
+        prefix = "FATA";
         break;
     }
     char buffer[256];
     vsnprintf(buffer, 256, message, args);
-    fprintf(stderr, "[%s] (%s) %s\n", timestamp, prefix, buffer);
+    fprintf(stderr, "[%s %s] %s\n", timestamp, prefix, buffer);
   }
 }
 
