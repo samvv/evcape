@@ -1,9 +1,0 @@
-[Unit]
-Description=Run evcape at boot with a delay
-
-[Timer]
-OnBootSec=15s
-
-[Install]
-WantedBy=timers.target
-
