@@ -303,7 +303,7 @@ void* evcape_monitor_udev(void* udev) {
           continue;
         }
 
-        evcape_log_verbose("detected change in device %s\n", udev_path);
+        evcape_log_verbose("detected change in device %s", udev_path);
 
         const char* value = udev_device_get_property_value(dev, "ID_INPUT_KEYBOARD");
         if (value && strcmp(value, "1") == 0) {
@@ -318,7 +318,7 @@ void* evcape_monitor_udev(void* udev) {
               struct epoll_event ev = {};
               int udev_fd = open(udev_path, O_RDONLY | O_NONBLOCK);
               if (udev_fd < 0) {
-                evcape_log_error("could not open keyboard %s\n", udev_path);
+                evcape_log_error("could not open keyboard %s", udev_path);
                 continue;
               }
               evcape_add_keyboard(udev_fd, udev_path);
@@ -356,7 +356,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  // printf("Now logging with log level %i\n", log_level);
+  evcape_log_info("Now logging with log level %i", log_level);
 
   keyboards = malloc(EVCAPE_MAX_KEYBOARDS * sizeof(EvKeyboardHandle));
   if (keyboards == NULL) {
