@@ -17,7 +17,7 @@ self: { config, lib, pkgs, ... }: with lib;
         wantedBy = [ "multi-user.target" ];
         after = [ "udev.service" ];
         environment = {
-          EVCAPE_LOG_LEVEL = "${cfg.log_level}";
+          EVCAPE_LOG_LEVEL = builtins.toString cfg.log_level;
         };
         serviceConfig = {
           Type = "simple";
