@@ -9,13 +9,12 @@
   # See https://wiki.nixos.org/wiki/Flakes#Output_schema for more information
   outputs = { self, nixpkgs, flake-utils }: {
 
+    nixosModules.default = import ./nixos.nix;
+
   } // flake-utils.lib.eachDefaultSystem(system:
 
     let pkgs = nixpkgs.legacyPackages.${system}; in
-
     {
-
-      nixosModules.default = import ./nixos.nix;
 
       packages.evcape = pkgs.stdenv.mkDerivation {
         name = "evcape";
