@@ -1,4 +1,4 @@
-{ self, config, lib, pkgs, ... }: with lib;
+self: { config, lib, pkgs, ... }: with lib;
 
   let cfg = config.services.evcape; in {
 
@@ -21,7 +21,7 @@
         };
         serviceConfig = {
           Type = "simple";
-          ExecStart = "${pkgs.evcape}/bin/evcape";
+          ExecStart = "${self.packages.${pkgs.system}.default}/bin/evcape";
           Restart = "on-failure";
           ProtectHome = "read-only";
         };
