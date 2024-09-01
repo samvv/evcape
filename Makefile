@@ -1,9 +1,11 @@
 
-all:
-	@echo 'Run `sudo make install` to build and install evcape on this computer.'
+all: build/evcape
+	sudo --preserve-env=EVCAPE_LOG_LEVEL ./build/evcape
 
-build/evcape:
+build/build.ninja: meson.build
 	meson setup build
+
+build/evcape: evcape.c build/build.ninja
 	ninja -C build evcape
 
 .PHONY: install
@@ -19,6 +21,10 @@ uninstall:
 	sudo rm -f /etc/systemd/system/evcape.service
 	sudo rm -f /etc/systemd/system/evcape.timer
 	sudo rm -f /usr/local/bin/evcape
+
+.PHONY: clean
+clean:
+	ninja -C build clean
 
 .PHONY: distclean
 distclean:
