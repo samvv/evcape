@@ -6,6 +6,8 @@ press of the Escape-key. It can significantly ease the development workflow
 when using a text editor such as Vim. Because it is written in C, this program
 is also very performant with minimal memory overhead.
 
+🚀 Now automatically detects hotplugging of keyboards!
+
 ## Installation
 
 ### Debian/Ubuntu
@@ -40,18 +42,14 @@ sudo make install
 
 This will install the following files:
 
- - `/etc/udev/rules.d/50-evcape.rules`
  - `/etc/systemd/system/evcape.service`
- - `/etc/systemd/system/evcape.timer`
  - `/usr/local/bin/evcape`
 
-You might want to run the following commands to activate `evcape` immediately:
+You might want to run the following commands to activate `evcape` immediately
+and on startup:
 
 ```
-sudo udevadm control --reload-rules && sudo udevadm trigger
-sudo systemctl daemon-reload
-sudo systemctl enable evcape.timer
-sudo systemctl start evcape
+sudo systemctl enable --now evcape
 ```
 
 If you just want the binary, run the following commands:
