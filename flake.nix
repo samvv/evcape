@@ -35,6 +35,11 @@
           maintainers = [ maintainers.samvv ];
           platforms = platforms.linux;
           mainProgram = "evcape";
+          longDescription = ''
+          evcape allows you to give your Ctrl-key a second life by making it
+          function like an Escape-key. The service runs in the background and
+          monitors what you type, injecting Escape whenever it is needed.
+          ''
         };
       };
 
