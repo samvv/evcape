@@ -6,35 +6,40 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  # See https://wiki.nixos.org/wiki/Flakes#Output_schema for more information
+  outputs = { self, nixpkgs, flake-utils }: {
 
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-      in {
-        packages.evcape = pkgs.stdenv.mkDerivation {
-          name = "evcape";
-          src = self;
-          nativeBuildInputs = with pkgs; [
-            meson
-            ninja
-            pkg-config
-          ];
-          buildInputs = with pkgs; [
-            libevdev
-            systemd
-          ];
-          meta = with pkgs.lib; {
-            homepage = "https://github.com/samvv/evcape";
-            description = "A small tool for making the Control key act as an Escape-key on Linux/Wayland";
-            license = licenses.mit;
-            maintainers = [ maintainers.samvv ];
-            platforms = platforms.linux;
-            mainProgram = "evcape";
-          };
+    nixosModules.default = import ./nixos.nix;
+
+  } // flake-utils.lib.eachDefaultSystem(system:
+
+    let pkgs = nixpkgs.legacyPackages.${system}; in
+    {
+
+      packages.evcape = pkgs.stdenv.mkDerivation {
+        name = "evcape";
+        src = self;
+        nativeBuildInputs = with pkgs; [
+          meson
+          ninja
+          pkg-config
+        ];
+        buildInputs = with pkgs; [
+          libevdev
+          systemd
+        ];
+        meta = with pkgs.lib; {
+          homepage = "https://github.com/samvv/evcape";
+          description = "A small tool for making the Control key act as an Escape-key on Linux/Wayland";
+          license = licenses.mit;
+          maintainers = [ maintainers.samvv ];
+          platforms = platforms.linux;
+          mainProgram = "evcape";
+        };
       };
+
       packages.default = self.packages.${system}.evcape;
-    }
-  );
+
+  });
 
 }
