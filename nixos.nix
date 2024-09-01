@@ -21,7 +21,7 @@
         };
         serviceConfig = {
           Type = "simple";
-          ExecStart = "${cfg.package}/bin/evcape";
+          ExecStart = "${self.packages.${system}.evcape}/bin/evcape";
           Restart = "on-failure";
           ProtectHome = "read-only";
         };
