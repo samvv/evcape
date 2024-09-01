@@ -14,7 +14,7 @@
     config = mkIf cfg.enable {
       systemd.services.evcape = {
         description = "evcape key remapper";
-        wantedBy = [ "multi-user.tarrget" ];
+        wantedBy = [ "multi-user.target" ];
         after = [ "udev.service" ];
         environment = {
           EVCAPE_LOG_LEVEL = "${cfg.log_level}";
