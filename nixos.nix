@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }: with lib;
 
-  let cfg = config.services.float; in {
+  let cfg = config.services.evcape; in {
 
     options.services.evcape = {
       enable = mkEnableOption "enable the evcape key remapper service";
