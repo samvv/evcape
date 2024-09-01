@@ -1,5 +1,4 @@
 
-#include <assert.h>
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -20,7 +19,7 @@
 #define EVCAPE_MAX_INPUT_EVENTS 32
 #define EVCAPE_MAX_EPOLL_EVENTS 5
 #define EVCAPE_MAX_KEYBOARDS 32
-#define EVCAPE_MAX_ARG_LEN 64
+#define EVCAPE_MAX_PATH 1024
 
 #define EVCAPE_KEY_TIMEOUT 0.5
 
@@ -28,6 +27,13 @@
 #define EVCAPE_OUT_OF_MEMORY 1
 #define EVCAPE_TOO_MANY_KEYBOARDS 2
 #define EVCAPE_OPEN_KEYBOARD_FAILED 3
+#define EVCAPE_KEYBOARD_NOT_FOUND 4
+#define EVCAPE_KEYBOARD_IGNORED 4
+
+
+#define EVCAPE_UNREACHABLE \
+  fprintf(stderr, "unreachable code executed\n"); \
+  abort();
 
 enum EvLogLevel {
   EVCAPE_NO_LOGGING,
@@ -42,7 +48,8 @@ enum EvLogLevel {
 typedef struct {
   int occupied;
   int fd;
-  char* path;
+  char* name;
+  char* syspath;
 } EvKeyboardHandle;
 
 static void emit(int fd, int type, int code, int val)
@@ -65,58 +72,26 @@ static double evcape_timestamp() {
     return (double)tv.tv_sec + (double)tv.tv_nsec / 1000000000;
 }
 
+char* evcape_log_level_to_string(enum EvLogLevel level) {
+    switch (level) {
+      case EVCAPE_TRACE:
+        return "TRACE";
+      case EVCAPE_VERBOSE:
+        return "VERB";
+      case EVCAPE_INFO:
+        return "INFO";
+      case EVCAPE_WARNING:
+        return "WARN";
+      case EVCAPE_ERROR:
+        return "ERRO";
+      case EVCAPE_FATAL:
+        return "FATA";
+      default:
+        EVCAPE_UNREACHABLE
+    }
+}
+
 static int log_level = EVCAPE_INFO;
-
-static int should_loop_epoll = 1;
-
-static int epoll = -1;
-
-static EvKeyboardHandle* keyboards;
-
-static size_t num_keyboards = 0;
-
-int evcape_add_keyboard(int fd, const char* devpath) {
-  if (num_keyboards >= EVCAPE_MAX_KEYBOARDS) {
-    return EVCAPE_TOO_MANY_KEYBOARDS;
-  }
-  for (size_t i = 0; i < EVCAPE_MAX_KEYBOARDS; i++) {
-    EvKeyboardHandle* kb = &keyboards[i];
-    if (kb->occupied == 0) {
-      size_t n = strlen(devpath);
-      char* path_clone = malloc(n);
-      if (path_clone == NULL) {
-        return EVCAPE_OUT_OF_MEMORY;
-      }
-      strncpy(path_clone, devpath, n);
-      kb->occupied = 1;
-      kb->fd = fd;
-      kb->path = path_clone;
-    }
-  }
-  num_keyboards++;
-  return EVCAPE_SUCCESS;
-}
-
-int evcape_keyboard_fd(const char* devpath) {
-  for (size_t i = 0; i < EVCAPE_MAX_KEYBOARDS; i++) {
-    EvKeyboardHandle* kb = &keyboards[i];
-    if (kb->occupied && strcmp(kb->path, devpath) == 0) {
-      return kb->fd;
-    }
-  }
-  return -1;
-}
-
-void evcape_remove_keyboard(const char* devpath) {
-  for (size_t i = 0; i < EVCAPE_MAX_KEYBOARDS; i++) {
-    EvKeyboardHandle* kb = &keyboards[i];
-    if (kb->occupied && strcmp(kb->path, devpath) == 0) {
-      free(kb->path);
-      kb->occupied = 0;
-      break;
-    }
-  }
-}
 
 static void evcape_vlog(int level, const char* message, va_list args) {
   if (log_level >= level) {
@@ -126,27 +101,7 @@ static void evcape_vlog(int level, const char* message, va_list args) {
     time(&t);
     tmp = localtime(&t);
     strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tmp);
-    const char* prefix;
-    switch (level) {
-      case EVCAPE_TRACE:
-        prefix = "TRACE";
-        break;
-      case EVCAPE_VERBOSE:
-        prefix = "VERB";
-        break;
-      case EVCAPE_INFO:
-        prefix = "INFO";
-        break;
-      case EVCAPE_WARNING:
-        prefix = "WARN";
-        break;
-      case EVCAPE_ERROR:
-        prefix = "ERRO";
-        break;
-      case EVCAPE_FATAL:
-        prefix = "FATA";
-        break;
-    }
+    const char* prefix = evcape_log_level_to_string(level);
     char buffer[256];
     vsnprintf(buffer, 256, message, args);
     fprintf(stderr, "[%s %s] %s\n", timestamp, prefix, buffer);
@@ -188,17 +143,104 @@ static void evcape_log_fatal(const char* message, ...) {
   va_end(args);
 }
 
-void evcape_log_status(int status) {
+char* evcape_strerror(int status) {
   switch (status) {
     case EVCAPE_OUT_OF_MEMORY:
-      evcape_log_error("host machine is out of memory");
-      break;
+      return "host machine is out of memory";
     case EVCAPE_TOO_MANY_KEYBOARDS:
-      evcape_log_error("there are more keyboards connected than evcape can handle");
-      break;
+      return "there are more keyboards connected than evcape can handle";
     case EVCAPE_OPEN_KEYBOARD_FAILED:
-      evcape_log_error("failed to open a keyboard device");
+      return "failed to connect to device";
+    case EVCAPE_KEYBOARD_NOT_FOUND:
+      return "the requested keyboard was not found in the database";
+    default:
+      EVCAPE_UNREACHABLE
+  }
+}
+
+static int should_loop_epoll = 1;
+
+static int epoll = -1;
+
+static EvKeyboardHandle keyboards[EVCAPE_MAX_KEYBOARDS];
+
+static size_t num_keyboards = 0;
+
+int evcape_add_keyboard(struct udev_device* dev, EvKeyboardHandle** out) {
+
+  const char* syspath = udev_device_get_syspath(dev);
+  const char* devnode = udev_device_get_devnode(dev);
+
+  char* name = malloc(EVCAPE_MAX_PATH);
+  if (name == NULL) return EVCAPE_OUT_OF_MEMORY;
+  const char* vendor = udev_device_get_property_value(dev, "ID_VENDOR_ENC");
+  const char* model = udev_device_get_property_value(dev, "ID_MODEL_ENC");
+  if (vendor != NULL && model != NULL) {
+    snprintf(name, EVCAPE_MAX_PATH, "%s (%s %s)", syspath, vendor, model);
+  } else {
+    strncpy(name, syspath, EVCAPE_MAX_PATH);
+  }
+
+  if (devnode == NULL) {
+    return EVCAPE_OPEN_KEYBOARD_FAILED;
+  }
+
+  if (num_keyboards >= EVCAPE_MAX_KEYBOARDS) {
+    return EVCAPE_TOO_MANY_KEYBOARDS;
+  }
+
+  int fd = open(devnode, O_RDONLY | O_NONBLOCK);
+  if (fd < 0) {
+    free(name);
+    return EVCAPE_OPEN_KEYBOARD_FAILED;
+  }
+
+  evcape_log_info("adding keyboard %s", name);
+
+  for (size_t i = 0; i < EVCAPE_MAX_KEYBOARDS; i++) {
+    EvKeyboardHandle* kb = &keyboards[i];
+    if (kb->occupied == 0) {
+      size_t n = strlen(syspath);
+      char* syspath_clone = malloc(n);
+      if (syspath_clone == NULL) {
+        free(name);
+        return EVCAPE_OUT_OF_MEMORY;
+      }
+      strncpy(syspath_clone, syspath, n);
+      kb->occupied = 1;
+      kb->name = name;
+      kb->fd = fd;
+      kb->syspath = syspath_clone;
+      *out = kb;
       break;
+    }
+  }
+  num_keyboards++;
+
+  return EVCAPE_SUCCESS;
+}
+
+int evcape_keyboard_find(const char* syspath, EvKeyboardHandle** out) {
+  for (size_t i = 0; i < EVCAPE_MAX_KEYBOARDS; i++) {
+    EvKeyboardHandle* kb = &keyboards[i];
+    if (kb->occupied && strcmp(kb->syspath, syspath) == 0) {
+      *out = kb;
+      return EVCAPE_SUCCESS;
+    }
+  }
+  return EVCAPE_KEYBOARD_NOT_FOUND;
+}
+
+void evcape_remove_keyboard(const char* syspath) {
+  evcape_log_info("removing keyboard %s", syspath);
+  for (size_t i = 0; i < EVCAPE_MAX_KEYBOARDS; i++) {
+    EvKeyboardHandle* kb = &keyboards[i];
+    if (kb->occupied && strcmp(kb->syspath, syspath) == 0) {
+      free(kb->name);
+      free(kb->syspath);
+      kb->occupied = 0;
+      return;
+    }
   }
 }
 
@@ -228,33 +270,19 @@ int evcape_populate_keyboards(struct udev* udev) {
 
     evcape_log_verbose("found keyboard device %s", path);
 
-    struct udev_device* kb = udev_device_new_from_syspath(udev, path);
+    struct udev_device* dev = udev_device_new_from_syspath(udev, path);
 
-    const char* dev_path = udev_device_get_devnode(kb);
-
-    if (dev_path) {
-
-      evcape_log_verbose("udev.devnode = %s", dev_path);
-
-      int fd = open(dev_path, O_RDONLY | O_NONBLOCK);
-
-      if (fd < 0) {
-        evcape_log_error("could not open device %s", dev_path);
-        continue;
-      }
-
-      status = evcape_add_keyboard(fd, dev_path);
-      if (status != EVCAPE_SUCCESS) {
-        evcape_log_status(status);
-        continue;
-      }
-
-      struct epoll_event ev = {};
-      ev.events = EPOLLIN;
-      ev.data.fd = fd;
-      epoll_ctl(epoll, EPOLL_CTL_ADD, fd, &ev);
-
+    EvKeyboardHandle* handle;
+    status = evcape_add_keyboard(dev, &handle);
+    if (status != EVCAPE_SUCCESS) {
+      evcape_log_error("failed to add keyboard device: %s", evcape_strerror(status));
+      continue;
     }
+
+    struct epoll_event ev = {};
+    ev.events = EPOLLIN;
+    ev.data.fd = handle->fd;
+    epoll_ctl(epoll, EPOLL_CTL_ADD, handle->fd, &ev);
 
   }
 
@@ -268,15 +296,17 @@ int evcape_populate_keyboards(struct udev* udev) {
  */
 void* evcape_monitor_udev(void* udev) {
 
+  int status;
+
   struct udev_monitor* mon;
 
   mon = udev_monitor_new_from_netlink(udev, "udev");
   if (udev_monitor_filter_add_match_subsystem_devtype(mon, "input", NULL) < 0) {
-    evcape_log_error("failed to call udev_monitor_filter_add_match_subsystem_devtype");
+    evcape_log_fatal("failed to call udev_monitor_filter_add_match_subsystem_devtype");
     abort();
   }
   if (udev_monitor_enable_receiving(mon) < 0){
-    evcape_log_error("failed to call udev_monitor_enable_receiving");
+    evcape_log_fatal("failed to call udev_monitor_enable_receiving");
     abort();
   }
 
@@ -298,38 +328,43 @@ void* evcape_monitor_udev(void* udev) {
 
       if (dev) {
 
-        const char* udev_path = udev_device_get_devnode(dev);
-        if (udev_path == NULL) {
-          continue;
-        }
+        const char* syspath = udev_device_get_syspath(dev);
 
-        evcape_log_verbose("detected change in device %s", udev_path);
+        evcape_log_verbose("detected change in device %s", syspath);
 
         const char* value = udev_device_get_property_value(dev, "ID_INPUT_KEYBOARD");
-        if (value && strcmp(value, "1") == 0) {
+        if (value == NULL || strcmp(value, "1") != 0) {
 
-          evcape_log_verbose("Device %s is a keyboard!", udev_path);
+          evcape_log_verbose("device %s is NOT a keyboard", syspath);
+
+        } else {
+
+          evcape_log_verbose("device %s is a keyboard", syspath);
 
           const char* udev_action = udev_device_get_action(dev);
 
           if (udev_action) {
 
             if (strcmp(udev_action, "add") == 0) {
+              EvKeyboardHandle* kb;
               struct epoll_event ev = {};
-              int udev_fd = open(udev_path, O_RDONLY | O_NONBLOCK);
-              if (udev_fd < 0) {
-                evcape_log_error("could not open keyboard %s", udev_path);
+              status = evcape_add_keyboard(dev, &kb);
+              if (status != EVCAPE_SUCCESS) {
+                evcape_log_error("failed to add keyboard %s: %s", syspath, evcape_strerror(status));
                 continue;
               }
-              evcape_add_keyboard(udev_fd, udev_path);
               ev.events = EPOLLIN;
-              ev.data.fd = udev_fd;
-              epoll_ctl(epoll, EPOLL_CTL_ADD, udev_fd, &ev);
+              ev.data.fd = kb->fd;
+              epoll_ctl(epoll, EPOLL_CTL_ADD, kb->fd, &ev);
             } else if (strcmp(udev_action, "remove") == 0) {
-              int udev_fd = evcape_keyboard_fd(udev_path);
-              assert(udev_fd != -1);
-              epoll_ctl(epoll, EPOLL_CTL_DEL, udev_fd, NULL);
-              evcape_remove_keyboard(udev_path);
+              EvKeyboardHandle* kb;
+              int status = evcape_keyboard_find(syspath, &kb);
+              if (status != EVCAPE_SUCCESS) {
+                evcape_log_error("failed to remove keyboard %s: %s", syspath, evcape_strerror(status));
+                continue;
+              }
+              epoll_ctl(epoll, EPOLL_CTL_DEL, kb->fd, NULL);
+              evcape_remove_keyboard(syspath);
             }
           }
 
@@ -356,13 +391,9 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  evcape_log_info("Now logging with log level %i", log_level);
+  evcape_log_info("Now logging with log level %s", evcape_log_level_to_string(log_level));
 
-  keyboards = malloc(EVCAPE_MAX_KEYBOARDS * sizeof(EvKeyboardHandle));
-  if (keyboards == NULL) {
-    evcape_log_status(EVCAPE_OUT_OF_MEMORY);
-    return 1;
-  }
+  // Set the 'occupied' bit to 0 for all keyboard entries
   memset(keyboards, 0, EVCAPE_MAX_KEYBOARDS * sizeof(EvKeyboardHandle));
 
   // Create the udev context
@@ -374,10 +405,11 @@ int main(int argc, const char* argv[]) {
   pthread_t hotplug_monitor;
 
   evcape_log_info("starting hotplug monitor");
-
   pthread_create(&hotplug_monitor, NULL, evcape_monitor_udev, udev);
 
+  evcape_log_info("adding existing keyboards ...");
   evcape_populate_keyboards(udev);
+  evcape_log_info("keyboards added");
 
   int uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
@@ -490,8 +522,6 @@ exit:
   close(uinput_fd);
 
   close(epoll);
-
-  free(keyboards);
 
   return code;
 }
