@@ -10,6 +10,27 @@ is also very performant with minimal memory overhead.
 
 ## Installation
 
+### NixOS
+
+Assuming your NixOS itself runs on [flakes][1], you need to add two lines to
+your configuration.
+
+**/etc/nixos/flake.nix**
+```nix
+{
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+  inputs.evcape.url = "github:samvv/evcape"; # Add this line
+  outputs = { self, nixpkgs, evcape }: {
+    nixosConfigurations.xana = nixpkgs.lib.nixosSystem {
+      modules = [
+        ./configuration.nix
+        evcape.nixosModules.default # Add this line
+      ];
+    };
+  };
+}
+```
+
 ### Debian/Ubuntu
 
 An APT repository will soon be avaialbe so that the latest version can be
