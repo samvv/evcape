@@ -9,7 +9,7 @@
   # See https://wiki.nixos.org/wiki/Flakes#Output_schema for more information
   outputs = { self, nixpkgs, flake-utils }: {
 
-    nixosModules.default = import ./nixos.nix;
+    nixosModules.default = let fn = import ./nixos.nix; in fn self;
 
   } // flake-utils.lib.eachDefaultSystem(system:
 
