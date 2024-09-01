@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }: with lib;
+{ self, config, lib, pkgs, ... }: with lib;
 
   let cfg = config.services.evcape; in {
 
