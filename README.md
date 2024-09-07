@@ -91,7 +91,8 @@ The binary will be available as `build/evcape`.
 
 For GNOME, use the following command to copy Ctrl to CapsLock.
 
-:warning: This command overrides existing configuration!
+> [!WARNING]
+> This command overrides existing configuration!
 
 ```bash
 gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']"
