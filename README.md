@@ -12,7 +12,7 @@ is also very performant with minimal memory overhead.
 
 ### NixOS
 
-Assuming your NixOS itself runs on [flakes][1], you need to add two lines to
+Assuming your NixOS itself runs on [flakes], you need to add two lines to
 your configuration.
 
 **/etc/nixos/flake.nix**
@@ -20,7 +20,7 @@ your configuration.
 {
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
   inputs.evcape.url = "github:samvv/evcape"; # Add this line
-  outputs = { self, nixpkgs, evcape }: {
+  outputs = { self, nixpkgs, evcape }: { # Modify this line
     nixosConfigurations.xana = nixpkgs.lib.nixosSystem {
       modules = [
         ./configuration.nix
@@ -30,6 +30,8 @@ your configuration.
   };
 }
 ```
+
+[flakes]: https://nixos.wiki/wiki/Flakes
 
 ### Debian/Ubuntu
 
