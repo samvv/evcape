@@ -10,6 +10,11 @@ is also very performant with minimal memory overhead.
 
 ## Installation
 
+### Debian/Ubuntu
+
+An APT repository will soon be avaialbe so that the latest version can be
+easily installed.
+
 ### NixOS
 
 Assuming your NixOS itself runs on [flakes], you need to add two lines to
@@ -32,11 +37,6 @@ your configuration.
 ```
 
 [flakes]: https://nixos.wiki/wiki/Flakes
-
-### Debian/Ubuntu
-
-An APT repository will soon be avaialbe so that the latest version can be
-easily installed.
 
 ### Building From Source
 
