@@ -85,6 +85,8 @@ ninja -C build evcape
 
 The binary will be available as `build/evcape`.
 
+## Configuration
+
 ### Setting Up CapsLock
 
 For GNOME, use the following command to copy Ctrl to CapsLock.
