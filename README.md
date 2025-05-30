@@ -17,6 +17,16 @@ is also very performant with minimal memory overhead.
 An APT repository will soon be availabe so that the latest version can be
 easily installed.
 
+### Arch Linux
+
+If you trust it, `evcape` is available [on the AUR][aur]:
+
+```sh
+paru -Suy evcape
+```
+
+[aur]: https://aur.archlinux.org/packages/evcape
+
 ### NixOS
 
 Assuming your NixOS itself runs on [flakes], you need to add two lines to
