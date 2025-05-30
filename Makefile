@@ -2,13 +2,16 @@
 VERSION=1.0.1
 
 all: build/evcape
-	sudo --preserve-env=EVCAPE_LOG_LEVEL ./build/evcape
 
 build/build.ninja: meson.build
 	meson setup build
 
 build/evcape: evcape.c build/build.ninja
 	ninja -C build evcape
+
+.PHONY: test
+test:
+	sudo --preserve-env=EVCAPE_LOG_LEVEL ./build/evcape
 
 .PHONY: pkg
 pkg: build/evcape
@@ -18,13 +21,13 @@ pkg: build/evcape
 
 .PHONY: install
 install: build/evcape
-	sudo install -v evcape.service /usr/lib/systemd/system/evcape.service
-	sudo install -v build/evcape /usr/bin/evcape
+	sudo install -Dm644 -v evcape.service $(DESTDIR)/usr/lib/systemd/system/evcape.service
+	sudo install -Dm755 -v build/evcape $(DESTDIR)/usr/bin/evcape
 
 .PHONY: uninstall
 uninstall:
-	sudo rm -f /etc/systemd/system/evcape.service
-	sudo rm -f /usr/bin/evcape
+	sudo rm -f $(DESTDIR)/etc/systemd/system/evcape.service
+	sudo rm -f $(DESTDIR)/usr/bin/evcape
 
 .PHONY: clean
 clean:

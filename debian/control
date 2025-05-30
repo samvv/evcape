@@ -1,0 +1,15 @@
+Source: evcape
+Maintainer: Sam Vervaeck <samvv@pm.me>
+Section: utils
+Priority: optional
+Standards-Version: 4.7.0
+Build-Depends: debhelper-compat (= 13), meson (>= 1), libevdev-dev (>= 1.13), libudev-dev (>= 252)
+
+Package: evcape
+Architecture: any
+Depends: libevdev2 (>= 1.13), libudev1 (>= 252)
+Description: make the CapsLock/Control key act as an Escape-key
+  This is a small utility that makes a short press of the Control-key act as a
+  press of the Escape-key. It can significantly ease the development workflow
+  when using a text editor such as Vim. Because it is written in C, this program
+  is also very performant with minimal memory overhead.
