@@ -4,7 +4,7 @@ After=udev.service
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/evcape
+ExecStart=/usr/bin/evcape
 Restart=on-failure
 
 [Install]
