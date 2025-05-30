@@ -25,6 +25,8 @@ If you trust it, `evcape` is available [on the AUR][aur]:
 paru -Suy evcape
 ```
 
+Enable on boot with `sudo systemctl enable --now evcape`.
+
 [aur]: https://aur.archlinux.org/packages/evcape
 
 ### NixOS
