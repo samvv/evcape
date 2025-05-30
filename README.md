@@ -14,7 +14,7 @@ is also very performant with minimal memory overhead.
 
 ### Debian/Ubuntu
 
-An APT repository will soon be avaialbe so that the latest version can be
+An APT repository will soon be availabe so that the latest version can be
 easily installed.
 
 ### NixOS
