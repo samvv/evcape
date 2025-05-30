@@ -1,5 +1,5 @@
 
-VERSION=1.0.0
+VERSION=1.0.1
 
 all: build/evcape
 	sudo --preserve-env=EVCAPE_LOG_LEVEL ./build/evcape
@@ -14,17 +14,17 @@ build/evcape: evcape.c build/build.ninja
 pack: build/evcape
 	install -Dm644 evcape.service pkg/etc/systemd/system
 	install -Dm0755 build/evcape pkg/usr/bin/
-	cd pkg && tar -cvzf evcape-$(VERSION).tar.gz *
+	cd pkg && tar -cvzf ../evcape-$(VERSION).tar.gz *
 
 .PHONY: install
 install: build/evcape
 	sudo install -v evcape.service /etc/systemd/system/evcape.service
-	sudo install -v build/evcape /usr/local/bin/evcape
+	sudo install -v build/evcape /usr/bin/evcape
 
 .PHONY: uninstall
 uninstall:
 	sudo rm -f /etc/systemd/system/evcape.service
-	sudo rm -f /usr/local/bin/evcape
+	sudo rm -f /usr/bin/evcape
 
 .PHONY: clean
 clean:
