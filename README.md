@@ -1,6 +1,8 @@
 evcape
 ======
 
+[![build](https://github.com/samvv/evcape/actions/workflows/build.yml/badge.svg)](https://github.com/samvv/evcape/actions/workflows/build.yml)
+
 This is a small utility that makes a short press of the Control-key act as a
 press of the Escape-key. It can significantly ease the development workflow
 when using a text editor such as Vim. Because it is written in C, this program
