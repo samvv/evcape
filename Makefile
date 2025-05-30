@@ -10,15 +10,15 @@ build/build.ninja: meson.build
 build/evcape: evcape.c build/build.ninja
 	ninja -C build evcape
 
-.PHONY: pack
-pack: build/evcape
-	install -Dm644 evcape.service pkg/etc/systemd/system
-	install -Dm0755 build/evcape pkg/usr/bin/
+.PHONY: pkg
+pkg: build/evcape
+	install -Dm644 evcape.service -t pkg/usr/lib/systemd/system/
+	install -Dm0755 build/evcape -t pkg/usr/bin/
 	cd pkg && tar -cvzf ../evcape-$(VERSION).tar.gz *
 
 .PHONY: install
 install: build/evcape
-	sudo install -v evcape.service /etc/systemd/system/evcape.service
+	sudo install -v evcape.service /usr/lib/systemd/system/evcape.service
 	sudo install -v build/evcape /usr/bin/evcape
 
 .PHONY: uninstall
