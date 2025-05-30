@@ -1,4 +1,6 @@
 
+VERSION=1.0.0
+
 all: build/evcape
 	sudo --preserve-env=EVCAPE_LOG_LEVEL ./build/evcape
 
@@ -7,6 +9,14 @@ build/build.ninja: meson.build
 
 build/evcape: evcape.c build/build.ninja
 	ninja -C build evcape
+
+.PHONY: pack
+pack: build/evcape
+	mkdir -p pkg/usr/bin/
+	mkdir -p pkg/etc/systemd/system
+	install -Dm644 evcape.service pkg/etc/systemd/system
+	install -Dm0755 build/evcape pkg/usr/bin/
+	tar -cvzf evcape-$(VERSION).tar.gz pkg/*
 
 .PHONY: install
 install: build/evcape
