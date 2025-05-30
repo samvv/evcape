@@ -472,13 +472,12 @@ start: while (should_loop_epoll) {
         goto exit;
       }
 
-      int input_event_count = read_count / sizeof(struct input_event);
-
       if (read_count % sizeof(struct input_event)) {
         evcape_log_error("inconsistent read while trying to read some keyboard events");
-        code = 1;
-        goto exit;
+        continue;
       }
+
+      int input_event_count = read_count / sizeof(struct input_event);
 
       struct input_event* input_events_end = input_events + input_event_count;
 
