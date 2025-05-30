@@ -12,6 +12,8 @@ is also very performant with minimal memory overhead.
 
 ## Installation
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/evcape.svg)](https://repology.org/project/evcape/versions)
+
 ### Debian/Ubuntu
 
 An APT repository will soon be availabe so that the latest version can be
