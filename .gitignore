@@ -20,3 +20,4 @@ devenv.local.nix
 
 # Packaging
 /pkg/
+/*.tar.gz
