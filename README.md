@@ -81,7 +81,7 @@ sudo make install
 This will install the following files:
 
  - `/etc/systemd/system/evcape.service`
- - `/usr/local/bin/evcape`
+ - `/usr/bin/evcape`
 
 You might want to run the following commands to activate `evcape` immediately
 and on startup:
