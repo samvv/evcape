@@ -12,8 +12,6 @@ build/evcape: evcape.c build/build.ninja
 
 .PHONY: pack
 pack: build/evcape
-	mkdir -p pkg/usr/bin/
-	mkdir -p pkg/etc/systemd/system
 	install -Dm644 evcape.service pkg/etc/systemd/system
 	install -Dm0755 build/evcape pkg/usr/bin/
 	tar -cvzf evcape-$(VERSION).tar.gz pkg/*
