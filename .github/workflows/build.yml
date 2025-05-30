@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Install Build Dependencies
-      run: apt install -y libevdev libudev
+      run: sudo apt install -y libevdev libudev
     - name: Install Python Dependencies
       run: pip install meson ninja
     - uses: actions/checkout@v4
